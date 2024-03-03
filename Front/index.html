@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Streaming TV</title>
+</head>
+<body>
+    <h2>Video Player</h2>
+    <video id="videoPlayer" controls style="max-width: 100%;">
+        <source type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <h3>Available Videos</h3>
+    <ul id="videoList">
+        <!-- Video links will be populated here -->
+    </ul>
+
+    <h3>Upload Video</h3>
+    <form id="uploadForm">
+        <input type="file" id="videoFile" accept="video/*">
+        <button type="submit">Upload Video</button>
+    </form>
+
+    <script>
+        // Assuming your API provides a list of video names/paths
+        const videosApiUrl = 'http://localhost:5268/video/list'; // Adjust this URL
+        const videoPlayer = document.getElementById('videoPlayer');
+        const videoList = document.getElementById('videoList');
+
+        // Fetch and display video list
+        async function fetchVideos() {
+            const response = await fetch(videosApiUrl);
+            const videos = await response.json(); // Assuming the response is a JSON array of video names/paths
+            
+            videos.forEach(video => {
+                const li = document.createElement('li');
+                const a = document.createElement('p');
+                a.href = '#';
+                a.textContent = video; // Adjust depending on your JSON structure
+                a.onclick = () => {
+                    videoPlayer.src = `http://localhost:5268/video/stream/${video}`; // Adjust this URL
+                    videoPlayer.load();
+                    videoPlayer.play();
+                };
+                li.appendChild(a);
+                videoList.appendChild(li);
+            });
+        }
+
+        fetchVideos();
+
+        // Handle video uploads
+        document.getElementById('uploadForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const videoFile = document.getElementById('videoFile').files[0];
+            if (!videoFile) {
+                alert('Please select a video file.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', videoFile);
+
+            try {
+                const response = await fetch('http://localhost:5268/video/upload', { // Adjust this URL
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    alert('Video uploaded successfully!');
+                    fetchVideos(); // Refresh the video list
+                } else {
+                    alert('Failed to upload video.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error uploading video.');
+            }
+        };
+    </script>
+</body>
+</html>
